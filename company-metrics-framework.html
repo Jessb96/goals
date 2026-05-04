@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Company Metrics Framework</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --black: #0e0e0e; --white: #fafaf8; --surface: #f4f3ef; --border: #e2e0d8; --muted: #9a9890;
+  --green: #1a6e4a; --green-bg: #e8f5ee; --accent: #2d5a3d;
+  --amber: #7a4a10; --amber-bg: #fdf0dc; --red: #8a2a2a; --red-bg: #faeaea;
+  --blue: #1a3f6e; --blue-bg: #e5eef8;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--white); color: var(--black); font-size: 13px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+
+/* ── TAB NAV ── */
+.tab-nav { position: sticky; top: 0; z-index: 100; background: var(--white); border-bottom: 1.5px solid var(--black); padding: 0 40px; display: flex; align-items: flex-end; gap: 0; max-width: 860px; margin: 0 auto; }
+.tab-btn { font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; color: var(--muted); background: none; border: none; border-bottom: 2.5px solid transparent; padding: 14px 20px 12px; cursor: pointer; letter-spacing: -0.01em; transition: color 0.15s, border-color 0.15s; white-space: nowrap; margin-bottom: -1.5px; }
+.tab-btn:hover { color: var(--black); }
+.tab-btn.active { color: var(--black); border-bottom-color: var(--black); }
+.tab-btn .tab-sub { font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 400; color: var(--muted); display: block; margin-top: 1px; }
+.tab-btn.active .tab-sub { color: var(--accent); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+.page { max-width: 860px; margin: 0 auto; padding: 48px 40px 80px; }
+
+/* ── SHARED ── */
+.header { border-bottom: 1.5px solid var(--black); padding-bottom: 24px; margin-bottom: 40px; }
+.header-label { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: .12em; color: var(--accent); margin-bottom: 10px; }
+.header h1 { font-size: 26px; font-weight: 500; letter-spacing: -0.03em; line-height: 1.15; margin-bottom: 8px; }
+.header .subtitle { font-size: 13px; color: #4a4a48; max-width: 560px; line-height: 1.7; }
+.header .meta { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 14px; }
+.section-label { font-size: 9px; font-weight: 500; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin: 24px 0 10px; }
+.dash-divider { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+.explanation { font-size: 12.5px; color: #4a4a48; line-height: 1.75; margin-bottom: 16px; }
+.dg4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 12px; }
+.dg3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 12px; }
+.dg2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; margin-bottom: 12px; }
+.dc { background: var(--surface); border-radius: 6px; padding: 11px 13px; }
+.dc .dl { font-size: 9px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-bottom: 4px; }
+.dc .dv { font-size: 15px; font-weight: 500; letter-spacing: -0.02em; line-height: 1.2; }
+.dc .ds { font-size: 10px; color: var(--muted); margin-top: 3px; font-family: 'DM Mono', monospace; }
+.dc .dp { font-size: 10px; color: var(--green); margin-top: 3px; font-weight: 500; }
+.dc .dw { font-size: 10px; color: var(--amber); margin-top: 3px; font-weight: 500; }
+.dc .dr { font-size: 10px; color: var(--red); margin-top: 3px; font-weight: 500; }
+.tbl-wrap { overflow-x: auto; margin-bottom: 12px; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+thead th { text-align: left; font-weight: 500; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--border); }
+tbody td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: var(--surface); }
+.td-g { color: var(--green); font-weight: 500; } .td-r { color: var(--red); font-weight: 500; } .td-a { color: var(--amber); font-weight: 500; } .td-m { color: var(--muted); }
+.floor-rule { border-left: 3px solid var(--accent); padding: 10px 14px; background: var(--green-bg); border-radius: 0 6px 6px 0; font-size: 12px; color: var(--accent); font-weight: 500; margin-top: 12px; line-height: 1.6; }
+.floor-rule span { font-weight: 400; color: #3a6e50; }
+.warn-rule { border-left: 3px solid var(--amber); padding: 10px 14px; background: var(--amber-bg); border-radius: 0 6px 6px 0; font-size: 12px; color: var(--amber); font-weight: 500; margin-top: 12px; line-height: 1.6; }
+.warn-rule span { font-weight: 400; color: #8a5a20; }
+.example { border: 1px solid var(--border); border-radius: 6px; padding: 14px 16px; margin-bottom: 16px; }
+.example-label { font-size: 9px; font-weight: 500; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin-bottom: 10px; }
+.calc-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+.calc-row:last-child { border-bottom: none; }
+.calc-row.total { font-weight: 500; font-size: 13px; padding-top: 8px; }
+.calc-row.total .cv { color: var(--green); }
+.cl { color: var(--muted); } .cv { font-family: 'DM Mono', monospace; font-size: 11px; } .cv.neg { color: var(--red); }
+.bands { display: grid; grid-template-columns: repeat(3,1fr); gap: 0; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; margin-bottom: 16px; }
+.band { padding: 11px 13px; border-right: 1px solid var(--border); text-align: center; }
+.band:last-child { border-right: none; }
+.band .b-label { font-size: 9px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-bottom: 5px; }
+.band .b-val { font-size: 14px; font-weight: 500; margin-bottom: 3px; }
+.band .b-sub { font-size: 10px; color: var(--muted); }
+.band-g { background: var(--green-bg); } .band-g .b-val { color: var(--green); }
+.band-a { background: var(--amber-bg); } .band-a .b-val { color: var(--amber); }
+.band-r { background: var(--red-bg); } .band-r .b-val { color: var(--red); }
+.metric-block { margin-bottom: 40px; border: 1.5px solid var(--black); border-radius: 8px; overflow: hidden; }
+.metric-header { background: var(--black); color: var(--white); padding: 14px 20px; display: flex; align-items: baseline; gap: 14px; }
+.metric-num { font-family: 'DM Mono', monospace; font-size: 11px; color: rgba(255,255,255,0.4); flex-shrink: 0; }
+.metric-name { font-size: 15px; font-weight: 500; letter-spacing: -0.01em; }
+.metric-tagline { font-size: 11px; color: rgba(255,255,255,0.45); margin-left: auto; font-family: 'DM Mono', monospace; }
+.metric-body { padding: 20px; }
+.definition { background: var(--surface); border-radius: 6px; padding: 14px 16px; margin-bottom: 16px; }
+.definition-label { font-size: 9px; font-weight: 500; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin-bottom: 6px; }
+.definition-text { font-size: 14px; font-weight: 500; letter-spacing: -0.01em; line-height: 1.45; color: var(--black); }
+.progress-wrap { margin: 10px 0; }
+.progress-label { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 5px; }
+.progress-label .pl-l { color: var(--muted); } .progress-label .pl-r { font-weight: 500; font-family: 'DM Mono', monospace; font-size: 10px; }
+.progress-bar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 4px; }
+.pf-green { background: var(--green); } .pf-amber { background: #d4870a; } .pf-blue { background: #2563c4; }
+.footnote { font-size: 11px; color: var(--muted); line-height: 1.7; border-top: 1px solid var(--border); padding-top: 20px; margin-top: 40px; font-family: 'DM Mono', monospace; }
+
+/* ── TAB 1: WHY ── */
+.why-intro { background: var(--black); color: var(--white); border-radius: 8px; padding: 28px 28px; margin-bottom: 40px; }
+.why-intro h2 { font-size: 18px; font-weight: 500; letter-spacing: -0.02em; margin-bottom: 10px; }
+.why-intro p { font-size: 13px; color: rgba(255,255,255,0.6); line-height: 1.75; max-width: 600px; }
+.why-three { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 40px; }
+.why-card { border: 1.5px solid var(--black); border-radius: 8px; padding: 18px; }
+.why-card .wc-num { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); margin-bottom: 8px; }
+.why-card .wc-name { font-size: 15px; font-weight: 500; letter-spacing: -0.02em; margin-bottom: 6px; }
+.why-card .wc-q { font-size: 11px; color: var(--accent); font-style: italic; margin-bottom: 10px; }
+.why-card .wc-why { font-size: 12px; color: #4a4a48; line-height: 1.65; }
+
+/* ── TAB 2: WHERE WE ARE ── */
+.disclaimer { background: var(--amber-bg); border: 1px solid #d4870a; border-radius: 6px; padding: 12px 16px; margin-bottom: 32px; font-size: 12px; color: var(--amber); line-height: 1.6; }
+.disclaimer strong { font-weight: 600; }
+.rag-block { margin-bottom: 28px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.rag-header { padding: 14px 18px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid var(--border); }
+.rag-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.rag-dot.green { background: var(--green); }
+.rag-dot.amber { background: #d4870a; }
+.rag-dot.red { background: var(--red); }
+.rag-title { font-size: 14px; font-weight: 500; letter-spacing: -0.01em; }
+.rag-status { margin-left: auto; font-size: 10px; font-weight: 500; padding: 3px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: .06em; }
+.rag-status.green { background: var(--green-bg); color: var(--green); }
+.rag-status.amber { background: var(--amber-bg); color: var(--amber); }
+.rag-status.red { background: var(--red-bg); color: var(--red); }
+.rag-body { padding: 16px 18px; }
+.rag-summary { font-size: 13px; font-weight: 500; margin-bottom: 12px; line-height: 1.5; }
+.rag-rows { display: flex; flex-direction: column; gap: 0; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; margin-bottom: 12px; }
+.rag-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 12px; }
+.rag-row:last-child { border-bottom: none; }
+.rag-row:hover { background: var(--surface); }
+.rag-row .rr-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.rag-row .rr-dot.green { background: var(--green); }
+.rag-row .rr-dot.amber { background: #d4870a; }
+.rag-row .rr-dot.red { background: var(--red); }
+.rag-row .rr-label { flex: 1; color: #4a4a48; }
+.rag-row .rr-val { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; min-width: 90px; text-align: right; }
+.rag-row .rr-note { font-size: 11px; color: var(--muted); min-width: 180px; text-align: right; }
+.rag-action { font-size: 12px; border-radius: 6px; padding: 10px 13px; line-height: 1.6; }
+.rag-action.green { background: var(--green-bg); color: var(--green); }
+.rag-action.amber { background: var(--amber-bg); color: var(--amber); }
+.rag-action.red { background: var(--red-bg); color: var(--red); }
+.rag-action strong { font-weight: 600; }
+.snapshot-bar { display: grid; grid-template-columns: repeat(3,1fr); gap: 0; background: var(--black); border-radius: 8px; overflow: hidden; margin-bottom: 32px; }
+.sb-item { padding: 18px 22px; border-right: 1px solid rgba(255,255,255,0.1); }
+.sb-item:last-child { border-right: none; }
+.sb-label { font-size: 9px; text-transform: uppercase; letter-spacing: .1em; color: rgba(255,255,255,0.4); margin-bottom: 6px; }
+.sb-val { font-size: 22px; font-weight: 500; letter-spacing: -0.02em; color: var(--white); margin-bottom: 3px; }
+.sb-sub { font-size: 10px; font-family: 'DM Mono', monospace; }
+.sb-sub.g { color: #5dcaa5; } .sb-sub.w { color: #f0b429; } .sb-sub.r { color: #e57373; }
+</style>
+</head>
+<body>
+
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('why')" id="btn-why">
+    The Why
+    <span class="tab-sub">Why these 3 metrics</span>
+  </button>
+  <button class="tab-btn" onclick="switchTab('where')" id="btn-where">
+    Where We Are
+    <span class="tab-sub">Current status · RAG</span>
+  </button>
+</div>
+
+<!-- ============================================================ -->
+<!-- TAB 1: THE WHY -->
+<!-- ============================================================ -->
+<div class="tab-panel active" id="panel-why">
+<div class="page">
+
+  <div class="header">
+    <div class="header-label">Leadership framework</div>
+    <h1>Why These Three Metrics</h1>
+    <p class="subtitle">Every decision, hire, and investment in this business should ladder back to one of these three. They were chosen because together they answer the questions that revenue alone cannot.</p>
+    <div class="meta">May 2026 · All figures AUD · Confidential — internal use only</div>
+  </div>
+
+
+
+  <div class="why-three">
+    <div class="why-card">
+      <div class="wc-num">01</div>
+      <div class="wc-name">Contribution Profit</div>
+      <div class="wc-q">"Are we getting richer, or just bigger?"</div>
+      <div class="wc-why">Revenue tells you how much came in. Contribution profit tells you how much you actually kept after making the product and paying to acquire the customer. Those two numbers can move in opposite directions.</div>
+    </div>
+    <div class="why-card">
+      <div class="wc-num">02</div>
+      <div class="wc-name">Habit Loop Retention</div>
+      <div class="wc-q">"Do customers come back on their own?"</div>
+      <div class="wc-why">If the product works, customers reorder without being paid to. Subscriptions are the strongest version of this signal. If retention is weak, every new customer acquired is essentially a one-time sale — and the business runs on a treadmill.</div>
+    </div>
+    <div class="why-card">
+      <div class="wc-num">03</div>
+      <div class="wc-name">Revenue Resilience</div>
+      <div class="wc-q">"What survives if Meta goes down tomorrow?"</div>
+      <div class="wc-why">Concentration in one paid channel is an existential risk. This metric measures what percentage of revenue would keep flowing without any ad spend. The higher that floor, the more risk we can afford to take on growth.</div>
+    </div>
+  </div>
+
+  <!-- METRIC 01 DETAIL -->
+  <div class="metric-block">
+    <div class="metric-header">
+      <span class="metric-num">01</span>
+      <span class="metric-name">Contribution Profit</span>
+      <span class="metric-tagline">Are we getting richer, or just bigger?</span>
+    </div>
+    <div class="metric-body">
+      <div class="definition">
+        <div class="definition-label">In plain English</div>
+        <div class="definition-text">Revenue, minus what it cost to make the product, minus what we spent on ads to sell it.</div>
+      </div>
+      <p class="explanation">This is the money left over after we've made the product and paid to acquire the customer. Everything else — team, ops, software, salaries — comes out of this pool. We track this instead of revenue because you can grow revenue while destroying value. If we spent $80 on ads to bring in a $100 sale, and it cost $25 to make the product, we lost $5 on that transaction. Revenue looked fine. Contribution profit caught the problem immediately.</p>
+      <p class="explanation">Our product margin is approximately 4x — meaning for every dollar it costs to make, we sell it for four. That gives us a ~75% gross margin before ads, which is exceptional for a physical product. The job of this metric is to protect that ratio as we scale.</p>
+
+      <div class="example">
+        <div class="example-label">How it works — one $100 sale</div>
+        <div class="calc-row"><span class="cl">Customer pays</span><span class="cv">$100.00</span></div>
+        <div class="calc-row"><span class="cl">Cost to make + ship (~25% COGS based on 4x product margin)</span><span class="cv neg">−$25.00</span></div>
+        <div class="calc-row"><span class="cl">Ad spend to acquire that customer (at 4x ROAS — $25 in, $100 back)</span><span class="cv neg">−$25.00</span></div>
+        <div class="calc-row total"><span class="cl">Contribution profit per sale</span><span class="cv">$50.00 (50%)</span></div>
+      </div>
+
+      <p class="explanation"><strong>Why not just use revenue?</strong> Because revenue is a vanity metric on its own. The same revenue number can mean very different things depending on how much was spent to generate it. Two weeks ago we had $397K gross sales. Last week $222K. Revenue looks like it halved. But if ad spend also came down and margin held, contribution profit may have been similar. Revenue alone doesn't tell you that story.</p>
+
+      <p class="explanation"><strong>Why not just use profit?</strong> Full profit requires knowing every cost — team, warehousing, software, ops. Those are hard to track week to week. Contribution profit is the version we can calculate in real time from data we already have. It's not the final answer, but it's the most honest leading indicator we can track consistently.</p>
+
+      <div class="section-label">The guardrails — ROAS thresholds</div>
+      <div class="bands">
+        <div class="band band-g"><div class="b-label">Scale zone</div><div class="b-val">4x+ ROAS</div><div class="b-sub">Increase budget confidently</div></div>
+        <div class="band band-a"><div class="b-label">Monitor zone</div><div class="b-val">3–4x ROAS</div><div class="b-sub">Acceptable — watch weekly</div></div>
+        <div class="band band-r"><div class="b-label">Below floor</div><div class="b-val">&lt;3x ROAS</div><div class="b-sub">Pause within 2 weeks</div></div>
+      </div>
+      <p class="explanation">The 3x floor gives us buffer for costs not yet in this model (team, ops, 3PL). At 3x ROAS on a 75% gross margin product, the business is still generating meaningful contribution profit even after untracked costs. Below 3x, we are likely running at a loss on those customers once everything is counted. This threshold applies to every individual campaign — not just the blended average.</p>
+
+      <div class="section-label">Returns — the silent drain on contribution profit</div>
+      <p class="explanation">Every return erodes contribution profit directly — we've already spent the COGS and the ad spend, and now we're giving the revenue back. Our all-time return rate is 1.1% of gross sales, which is very healthy. However, $146K of all-time returns (75% of the total) are unattributed to any product in our data — this needs investigation before we can understand where returns are actually coming from.</p>
+
+      <div class="floor-rule">Target: grow monthly contribution profit from ~$668K toward $900K within 12 months. <span>Lever 1: fix underperforming Meta campaigns (4 of 9 currently below the 3x floor). Lever 2: grow subscriptions to reduce acquisition cost per repeat customer.</span></div>
+    </div>
+  </div>
+
+  <!-- METRIC 02 DETAIL -->
+  <div class="metric-block">
+    <div class="metric-header">
+      <span class="metric-num">02</span>
+      <span class="metric-name">Habit Loop Retention</span>
+      <span class="metric-tagline">Do customers come back on their own?</span>
+    </div>
+    <div class="metric-body">
+      <div class="definition">
+        <div class="definition-label">In plain English</div>
+        <div class="definition-text">The % of first-time customers who buy again within 90 days — without being paid to through heavy discounts.</div>
+      </div>
+      <p class="explanation">This is the most honest signal of whether the product actually works. If customers come back on their own, the product is delivering on its promise. If they don't, no amount of ad spend fixes that long term — the business is just running a leaky bucket, spending money to fill it while it drains just as fast.</p>
+      <p class="explanation">Repeat customers are also dramatically more profitable than new ones. A repeat customer costs almost nothing to re-acquire, so nearly the full product margin flows through as contribution profit. Growing the proportion of revenue from returning customers is one of the highest-leverage things we can do for profitability without touching a single ad campaign.</p>
+      <p class="explanation"><strong>Why subscriptions are the strongest version of this signal:</strong> A subscription means a customer has decided, without being reminded, to keep the product in their life permanently. They've built it into their routine. That's the habit loop confirmed. Our subscription programme has generated $971K in lifetime revenue since April 2025, and 67.2% of that is recurring — meaning most subscription revenue comes from people who signed up and kept going, not just tried it once.</p>
+
+      <div class="section-label">What the subscription data tells us</div>
+      <div class="dg4">
+        <div class="dc"><div class="dl">Lifetime sub revenue</div><div class="dv">$971K</div><div class="ds">Since Apr 2025</div></div>
+        <div class="dc"><div class="dl">Recurring % of sub revenue</div><div class="dv">67.2%</div><div class="dp">Habit loop confirmed</div></div>
+        <div class="dc"><div class="dl">Current MRR</div><div class="dv">$56,550</div><div class="dp">Flows without ad spend</div></div>
+        <div class="dc"><div class="dl">Daily cancellation rate</div><div class="dv">0.45%</div><div class="dp">Stable and healthy</div></div>
+      </div>
+
+      <p class="explanation"><strong>The biggest untapped opportunity in this metric:</strong> Only 3.1% of checkout orders include a subscription product. The product is clearly sticky once people subscribe — 67% recurring revenue is proof. But the vast majority of customers are buying once without subscribing. Converting more of them at checkout doesn't require more ad spend — it requires better subscription merchandising on the product page and at checkout. Every 100 new subscribers adds ~$6,200/month in MRR permanently.</p>
+
+      <p class="explanation"><strong>What we still need:</strong> The 90-day repeat purchase rate for customers who buy without subscribing. This is the missing piece — it would tell us whether the habit loop is working for the majority of customers who haven't formally subscribed. This data needs to be pulled from Shopify.</p>
+
+      <div class="floor-rule">Target: rebuild subscriptions from 910 to 1,400. Grow checkout subscription conversion from 3.1% to 6%+. <span>Pull 90-day repeat purchase rate from Shopify to complete the picture.</span></div>
+    </div>
+  </div>
+
+  <!-- METRIC 03 DETAIL -->
+  <div class="metric-block">
+    <div class="metric-header">
+      <span class="metric-num">03</span>
+      <span class="metric-name">Revenue Resilience</span>
+      <span class="metric-tagline">What survives if Meta goes down tomorrow?</span>
+    </div>
+    <div class="metric-body">
+      <div class="definition">
+        <div class="definition-label">In plain English</div>
+        <div class="definition-text">The % of revenue that keeps flowing without any paid ad spend — our floor if everything else stops.</div>
+      </div>
+      <p class="explanation">Every business that relies heavily on one paid channel is one policy change, one algorithm update, or one bad month of creative away from a revenue crisis. This metric exists to make sure we are actively building against that risk — not just hoping it doesn't happen.</p>
+      <p class="explanation">The floor is calculated as: subscription MRR plus email flow revenue, divided by total weekly revenue. These are the two revenue streams that keep running without anyone actively spending on campaigns. Right now that floor is approximately <strong>14.8% of weekly revenue</strong> — meaning if all paid ads stopped tomorrow, we'd retain roughly 15 cents of every dollar we currently make. The target is 35%, which would mean the business could survive a full month of zero paid activity without existential risk.</p>
+      <p class="explanation"><strong>Why this matters right now:</strong> Meta CPA has risen for three consecutive weeks ($34.63 → $40.30 → $49.77). That trend is a live demonstration of channel dependency — one channel deteriorating and dragging the whole business's efficiency with it. The answer is not just to fix the campaigns (though we should). It's to build a floor high enough that we're never fully at the mercy of any single channel.</p>
+      <p class="explanation"><strong>The fastest way to build the floor</strong> is subscriptions. Subscription MRR flows every month with zero acquisition cost. Email flows are the second pillar — healthy now but partially dependent on traffic, so they don't fully count as independent. Every new subscriber is a permanent addition to the floor.</p>
+
+      <div class="section-label">Current floor breakdown</div>
+      <div class="dg3">
+        <div class="dc"><div class="dl">Subscription MRR (weekly equiv.)</div><div class="dv">$13,060</div><div class="dp">Zero ad spend needed</div></div>
+        <div class="dc"><div class="dl">Email flow revenue (weekly)</div><div class="dv">~$29,164</div><div class="dp">Always-on, no campaigns</div></div>
+        <div class="dc"><div class="dl">Combined floor</div><div class="dv">~$42,224</div><div class="dw">14.8% of avg weekly revenue</div></div>
+      </div>
+
+      <div class="floor-rule">Target: grow revenue floor from 14.8% to 35% within 18 months. <span>At 35%, the business can absorb a full month of zero Meta spend without existential risk. Primary lever: grow subscriptions. Secondary: protect email list quality.</span></div>
+    </div>
+  </div>
+
+  <div class="footnote">May 2026 · All figures AUD · Estimates based on Apr 2026 data and 4x product margin heuristic · Numbers unverified — for team discussion only · Confidential, do not share externally.</div>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- TAB 2: WHERE WE ARE -->
+<!-- ============================================================ -->
+<div class="tab-panel" id="panel-where">
+<div class="page">
+
+  <div class="header">
+    <div class="header-label">Current state · May 2026</div>
+    <h1>Where We Are</h1>
+    <p class="subtitle">RAG status across all three metrics. Use this as the starting point for the leadership conversation.</p>
+    <div class="meta">May 2026 · All figures AUD · Confidential — internal use only</div>
+  </div>
+
+  <div class="disclaimer">
+    <strong>⚠ These numbers have not yet been verified by the team.</strong> Figures are based on Shopify, Klaviyo, Meta Ads, and Skio data exports from Apr–May 2026. COGS assumption (~25%) is an estimate based on the 4x product margin heuristic and has not been confirmed against actual manufacturing costs. Treat as directional until the team has cross-checked.
+  </div>
+
+  <div class="snapshot-bar">
+    <div class="sb-item">
+      <div class="sb-label">Est. weekly gross (Apr avg)</div>
+      <div class="sb-val">$285,717</div>
+      <div class="sb-sub w">†Unverified · confirm with team</div>
+    </div>
+    <div class="sb-item">
+      <div class="sb-label">Est. monthly contribution profit</div>
+      <div class="sb-val">~$668K</div>
+      <div class="sb-sub w">After COGS + Meta · excl. ops costs</div>
+    </div>
+    <div class="sb-item">
+      <div class="sb-label">Subscription MRR</div>
+      <div class="sb-val">$56,550</div>
+      <div class="sb-sub g">Floor revenue · no ad spend needed</div>
+    </div>
+  </div>
+
+  <!-- RAG 01: CONTRIBUTION PROFIT -->
+  <div class="rag-block">
+    <div class="rag-header">
+      <div class="rag-dot amber"></div>
+      <div class="rag-title">01 — Contribution Profit</div>
+      <div class="rag-status amber">Needs attention</div>
+    </div>
+    <div class="rag-body">
+      <div class="rag-summary">The underlying product margin is strong. The problem is ad efficiency — Meta CPA has risen for three consecutive weeks and 4 of 9 active campaigns are below the 3x profitability floor.</div>
+      <div class="rag-rows">
+        <div class="rag-row">
+          <div class="rr-dot green"></div>
+          <div class="rr-label">Product margin (4x / ~75% gross)</div>
+          <div class="rr-val">Healthy</div>
+          <div class="rr-note">Foundation is strong</div>
+        </div>
+        <div class="rag-row">
+          <div class="rr-dot green"></div>
+          <div class="rr-label">Est. monthly contribution profit</div>
+          <div class="rr-val">~$668K</div>
+          <div class="rr-note">Target: $900K/month</div>
+        </div>
+        <div class="rag-row">
+          <div class="rr-dot red"></div>
+          <div class="rr-label">Meta blended CPA trend</div>
+          <div class="rr-val">$49.77</div>
+          <div class="rr-note">↑ 3 consecutive weeks</div>
+        </div>
+        <div class="rag-row">
+          <div class="rr-dot red"></div>
+          <div class="rr-label">Campaigns below 3x ROAS floor</div>
+          <div class="rr-val">4 of 9</div>
+          <div class="rr-note">#03 FF, #04 BB, #31 CIBS, #05 Jr</div>
+        </div>
+        <div class="rag-row">
+          <div class="rr-dot green"></div>
+          <div class="rr-label">Return rate (recent)</div>
+          <div class="rr-val">~0.6%</div>
+          <div class="rr-note">Healthy — industry avg 5–15%</div>
+        </div>
+        <div class="rag-row">
+          <div class="rr-dot red"></div>
+          <div class="rr-label">Unattributed returns</div>
+          <div class="rr-val">$146K</div>
+          <div class="rr-note">75% of all returns — investigate</div>
+        </div>
+      </div>
+      <div class="rag-action amber"><strong>Action this week:</strong> Pause #03 FF Testing, #04 BB Testing, #31 CIBS — all below 3x ROAS for 2+ weeks. Reduce TOM Jr Relaunch budget or refresh creative (ROAS fell from 4.27x to 2.48x in 2 weeks). Investigate $146K unattributed returns.</div>
+    </div>
+  </div>
+
+  <!-- RAG 02: RETENTION -->
+  <div class="rag-block">
+    <div class="rag-header">
+      <div class="rag-dot amber"></div>
+      <div class="rag-title">02 — Habit Loop Retention</div>
+      <div class="rag-status amber">Strong signal, low conversion</div>
+    </div>
+    <div class="rag-body">
+      <div class="rag-summary">The habit loop is working — 67.2% of subscription revenue is recurring, and the daily cancellation rate is stable. The problem is that not enough customers are being converted to subscription in the first place.</div>
+      <div class="rag-rows">
+        <div class="rag-row">
+          <div class="rr-dot green"></div>
+          <div class="rr-label">Recurring subscription revenue %</div>
+          <div class="rr-val">67.2%</div>
+          <div class="rr-note">Habit loop confirmed</div>
+        </div>
+        <div class="rag-row">
+          <div class="rr-dot green"></div>
+          <div class="rr-label">Daily cancellation rate</div>
+          <div class="rr-val">0.45%</div>
+          <div class="rr-note">Stable — healthy baseline</div>
+        </div>
+        <div class="rag-row">
+          <div class="rr-dot green"></div>
+          <div class="rr-label">Subscription MRR</div>
+          <div class="rr-val">$56,550</div>
+          <div class="rr-note">Floor revenue</div>
+        </div>
+        <div class="rag-row">
+          <div class="rr-dot amber"></div>
+          <div class="rr-label">Active subscriptions vs peak</div>
+          <div class="rr-val">910 / ~1,550</div>
+          <div class="rr-note">−640 from peak · cause unconfirmed</div>
+        </div>
+        <div class="rag-row">
+          <div class="rr-dot red"></div>
+          <div class="rr-label">Subscription checkout conversion</div>
+          <div class="rr-val">3.1%</div>
+          <div class="rr-note">Target 6–8% — large opportunity</div>
+        </div>
+        <div class="rag-row">
+          <div class="rr-dot amber"></div>
+          <div class="rr-label">90-day repeat rate (non-subscribers)</div>
+          <div class="rr-val">Unknown</div>
+          <div class="rr-note">†Must pull from Shopify</div>
+        </div>
+      </div>
+      <div class="rag-action amber"><strong>Action this month:</strong> Improve subscription offer at checkout and product pages. Pull 90-day repeat purchase rate from Shopify. Investigate subscription count decline — confirm cause before acting on it.</div>
+    </div>
+  </div>
+
+  <!-- RAG 03: RESILIENCE -->
+  <div class="rag-block">
+    <div class="rag-header">
+      <div class="rag-dot red"></div>
+      <div class="rag-title">03 — Revenue Resilience</div>
+      <div class="rag-status red">Too exposed</div>
+    </div>
+    <div class="rag-body">
+      <div class="rag-summary">The revenue floor is 14.8% of weekly revenue — meaning if paid ads stopped tomorrow, we'd retain less than 15 cents of every dollar we currently make. Meta dependency at 40–50% is too high.</div>
+      <div class="rag-rows">
+        <div class="rag-row">
+          <div class="rr-dot red"></div>
+          <div class="rr-label">Revenue floor (MRR + flows / total)</div>
+          <div class="rr-val">14.8%</div>
+          <div class="rr-note">Target: 35%</div>
+        </div>
+        <div class="rag-row">
+          <div class="rr-dot red"></div>
+          <div class="rr-label">Meta revenue dependency</div>
+          <div class="rr-val">~40–50%</div>
+          <div class="rr-note">Target: below 30%</div>
+        </div>
+        <div class="rag-row">
+          <div class="rr-dot amber"></div>
+          <div class="rr-label">Subscription MRR as % of revenue</div>
+          <div class="rr-val">~4.6%</div>
+          <div class="rr-note">Target: 12–15%</div>
+        </div>
+        <div class="rag-row">
+          <div class="rr-dot green"></div>
+          <div class="rr-label">Email flow revenue (weekly)</div>
+          <div class="rr-val">~$29,164</div>
+          <div class="rr-note">Healthy — scales with traffic</div>
+        </div>
+        <div class="rag-row">
+          <div class="rr-dot green"></div>
+          <div class="rr-label">Email list health (open rate)</div>
+          <div class="rr-val">50–54%</div>
+          <div class="rr-note">BAU plain-text sends — strong</div>
+        </div>
+      </div>
+
+      <div class="section-label" style="margin-top:16px;">Progress toward resilience targets</div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span class="pl-l">Revenue floor % of weekly revenue</span><span class="pl-r">14.8% → Target 35%</span></div>
+        <div class="progress-bar"><div class="progress-fill pf-amber" style="width:42%"></div></div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span class="pl-l">Subscription MRR</span><span class="pl-r">$56,550 → Target $100K</span></div>
+        <div class="progress-bar"><div class="progress-fill pf-blue" style="width:57%"></div></div>
+      </div>
+      <div class="progress-wrap" style="margin-bottom:16px;">
+        <div class="progress-label"><span class="pl-l">Active subscriptions rebuild</span><span class="pl-r">910 → Target 1,400</span></div>
+        <div class="progress-bar"><div class="progress-fill pf-green" style="width:65%"></div></div>
+      </div>
+
+      <div class="rag-action red"><strong>Action ongoing:</strong> Every subscription acquired reduces Meta dependency permanently. Prioritise subscription conversion at checkout above almost any other growth initiative — it is the single highest-leverage action for building resilience. Consider a second paid channel (Google, TikTok) as a medium-term project to reduce Meta concentration risk.</div>
+    </div>
+  </div>
+
+  <div class="footnote">May 2026 · All figures AUD · Numbers unverified — for team discussion only · COGS ~25% estimated from 4x product margin heuristic · Contribution profit excludes team, ops, 3PL costs · $146K unattributed returns require investigation · 90-day repeat rate marked unknown pending Shopify pull · Confidential, do not share externally.</div>
+
+</div>
+</div>
+
+<script>
+function switchTab(tab) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+  document.getElementById('btn-' + tab).classList.add('active');
+}
+</script>
+</body>
+</html>
